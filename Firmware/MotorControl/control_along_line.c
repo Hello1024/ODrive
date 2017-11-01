@@ -22,7 +22,7 @@ void update_setpoints_constant_velocity() {
     if (d > 0) cal_state.notify_flags |= NOTIFY_PAST_END;
     if (d < -cal_state.distance) cal_state.notify_flags |= NOTIFY_BEFORE_START;
 
-    if (cal_state.notify_flags & cal_state.notify_flag_mask) {
+    if (cal_state.notify_flags & cal_state.notify_flag_mask && cal_state.done_mutex_id) {
         cal_state.notify_flag_mask = 0;
         osMutexRelease(cal_state.done_mutex_id);
     }
