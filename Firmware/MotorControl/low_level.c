@@ -1267,6 +1267,10 @@ static void control_motor_loop(Motor_t* motor) {
         if(!FOC_current(motor, 0.0f, Iq)){
             break; // in case of error exit loop, motor->error has been set by FOC_current
         }
+
+        // Caller specified callback to adjust set points every cycle.
+        if (motor->update_setpoints_fn)
+          motor->update_setpoints_fn();
     }
 
     //We are exiting control, reset Ibus, and update brake current
