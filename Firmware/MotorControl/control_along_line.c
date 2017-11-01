@@ -42,7 +42,7 @@ void update_setpoints_constant_current() {
     // See if we have arrived yet.
     if (vel_perp > cal_state.vel_alert_limit) {
         cal_state.notify_flags |= NOTIFY_OVER_LIMIT;
-    } else { 
+    } else {
         cal_state.notify_flags |= NOTIFY_UNDER_LIMIT;
     }  
 
@@ -55,12 +55,12 @@ void line_control(float* start, float* end, float velocity_feedforward, float cu
 
     motors[1].update_setpoints_fn = NULL;
 
-    // We will release this when we get to the destination
+    // We will release this when we get to the destination or another event occurs.
     osMutexWait(cal_state.done_mutex_id = done_mutex_id, 0);
     
     float steps[2];
-    steps[0] = start[0]-end[0];
-    steps[1] = start[1]-end[1];
+    steps[0] = end[0]-start[0];
+    steps[1] = end[1]-start[1];
 
     cal_state.distance = sqrt(steps[0]*steps[0]+steps[1]*steps[1]);
 
