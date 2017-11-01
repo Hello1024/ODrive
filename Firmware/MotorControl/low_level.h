@@ -135,6 +135,7 @@ typedef struct {
     Sensorless_t sensorless;
     int timing_log_index;
     uint16_t timing_log[TIMING_LOG_SIZE];
+    void (*update_setpoints_fn)();
 } Motor_t;
 
 typedef struct{
@@ -155,6 +156,8 @@ void set_pos_setpoint(Motor_t* motor, float pos_setpoint, float vel_feed_forward
 void set_vel_setpoint(Motor_t* motor, float vel_setpoint, float current_feed_forward);
 void set_current_setpoint(Motor_t* motor, float current_setpoint);
 
+float get_rotor_phase(Motor_t* motor);
+float get_pll_vel(Motor_t* motor);
 void safe_assert(int arg);
 void init_motor_control();
 void step_cb(uint16_t GPIO_Pin);

@@ -245,8 +245,6 @@ static void scan_motor_loop(Motor_t* motor, float omega, float voltage_magnitude
 static void FOC_voltage_loop(Motor_t* motor, float v_d, float v_q);
 // Main motor control
 static void update_rotor(Motor_t* motor);
-static float get_rotor_phase(Motor_t* motor);
-static float get_pll_vel(Motor_t* motor);
 static bool spin_up_sensorless(Motor_t* motor);
 static void update_brake_current(float brake_current);
 static void queue_modulation_timings(Motor_t* motor, float mod_alpha, float mod_beta);
@@ -1010,7 +1008,7 @@ static bool using_sensorless(Motor_t* motor) {
         return false;
 }
 
-static float get_rotor_phase(Motor_t* motor) {
+float get_rotor_phase(Motor_t* motor) {
     if (using_encoder(motor)) 
         return motor->encoder.phase;
     else if (using_sensorless(motor)) 
@@ -1020,7 +1018,7 @@ static float get_rotor_phase(Motor_t* motor) {
         return 0.0f;
 }
 
-static float get_pll_vel(Motor_t* motor) {
+float get_pll_vel(Motor_t* motor) {
     if (using_encoder(motor)) 
         return motor->encoder.pll_vel;
     else if (using_sensorless(motor)) 

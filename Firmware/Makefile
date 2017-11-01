@@ -81,6 +81,7 @@ C_SOURCES = \
   Src/syscalls.c \
   MotorControl/utils.c \
   MotorControl/commands.c \
+  MotorControl/control_along_line.c \
   MotorControl/low_level.c \
   MotorControl/gcode_input.c \
   MotorControl/grbl/gcode.c \
