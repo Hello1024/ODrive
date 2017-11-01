@@ -1,5 +1,5 @@
 // Allows motors to be constrained to move along a 2d line with a given 
-// velocity and acceleration.  Will trigger a semaphore when the end of
+// velocity and acceleration.  Will trigger a mutex when the end of
 // the line is reached.
 
 #include "control_along_line.h"
@@ -23,9 +23,8 @@ void update_setpoints_constant_velocity() {
     if (d < -cal_state.distance) cal_state.notify_flags |= NOTIFY_BEFORE_START;
 
     if (cal_state.notify_flags & cal_state.notify_flag_mask) {
-        motors[1].update_setpoints_fn = NULL;
+        cal_state.notify_flag_mask = 0;
         osMutexRelease(cal_state.done_mutex_id);
-        return;
     }
     cal_state.notify_flags = 0;
 }
@@ -51,9 +50,6 @@ void update_setpoints_constant_current() {
 }
 
 
-
-
-
 void line_control(float* start, float* end, float velocity_feedforward, float current_feedforward,
                   void (*update_setpoints_fn)(), osMutexId done_mutex_id, int notify_flags_mask) {
 
@@ -72,13 +68,14 @@ void line_control(float* start, float* end, float velocity_feedforward, float cu
     cal_state.normalized_steps[1] = steps[1] / cal_state.distance;
     
     cal_state.notify_flags = 0;
-    cal_state.notify_flag_mask = notify_flags_mask;
+    cal_state.notify_flag_mask = 0;
 
     set_pos_setpoint(&motors[0], 0, velocity_feedforward * cal_state.normalized_steps[0], 
                      current_feedforward * cal_state.normalized_steps[0]);
     set_pos_setpoint(&motors[1], 0, velocity_feedforward * cal_state.normalized_steps[1],
                      current_feedforward * cal_state.normalized_steps[1]);    
     motors[1].update_setpoints_fn = update_setpoints_fn;
+    cal_state.notify_flag_mask = notify_flags_mask;
 
     (*update_setpoints_fn)();
 }

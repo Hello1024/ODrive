@@ -20,10 +20,13 @@ when it arrives.
 Advanced usage:
 
  * Set "velocity_feedforward" to zero to make a brake/simulated stiff thing.
+   Stiffness is controlled by motor->vel_integrator_gain and vel_gain.
  * Set NOTIFY_BEFORE_START flag to get a notification if the machine head
    is pushed backwards along the line.
  * Use your notification callback to change the line segment.  This allows
    you to present a curved line, a maze, or anything else fun.
+
+This method is thread safe.
 */
 void velocity_control_along_line(
 	float* start, float* end, float velocity_feedforward,
@@ -53,6 +56,11 @@ Advanced usage:
    a path.
  * Set NOTIFY_BEFORE_START flag to get a notification if the machine head
    is pushed backwards along the line.
+ * Use the NOTIFY_OVER_LIMIT callback to switch to constant velocity mode
+   to have a ramp up then constant speed along a path.  Can be combined with
+   the path changing direction using NOTIFY_PAST_END.
+
+This method is thread safe.
 */
 void current_control_along_line(
 	float* start, float* end, float current_feedforward, osMutexId done_mutex_id,
