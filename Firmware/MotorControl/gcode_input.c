@@ -1,53 +1,92 @@
 #include "grbl.h"
 #include "gcode_input.h"
+#include "cmsis_os.h"
+#include "control_along_line.h"
 
-void consume_output() {
-  // Gets the current block. Returns NULL if buffer empty
-  plan_block_t *pb = plan_get_current_block();
+osMutexDef (MutexGcode);                                     // Mutex name definition
+osMutexId mutex_gcode;
 
-  if (pb) {
-    // We don't do timing here.   We use the actual position to regulate time.
-    float real_steps[2];
-    real_steps[0] = pb->steps[0] * (pb->direction_bits&1)?1:-1;
-    real_steps[1] = pb->steps[1] * (pb->direction_bits&2)?1:-1;
-    
-    // Position setpoint is the position on the line nearest the current location.
-    
-    // TODO: For now, we (wrongly) just use the end location as the setpoint.
-    motors[0].pos_setpoint += real_steps[0];
-    motors[1].pos_setpoint += real_steps[1];
+// TODO
+float magic_constant_todo_with_mass = 2.f;  //counts/sec^2/A
 
+void update_settings(void) {
+    int i;
+    for (i=0; i<2; i++) {
+        // Maximum velocity in mm/minute
+        settings.max_rate[i] = 
+                motors[i].vel_limit /* [counts/s] */
+                / (float) settings.steps_per_mm[i] * 60.f;
 
-    // Velocity setpoint is the motion profile in https://github.com/gnea/grbl/blob/master/grbl/stepper.c#L172
-
-    // TODO:  For now, we just use the exit velocity for the whole line.
-    float vel_sqr = plan_get_exec_block_exit_speed_sqr();
-    float dist_sqr = pb->steps[0] * pb->steps[0] + pb->steps[1] * pb->steps[1];
-    motors[0].vel_setpoint = real_steps[0] * sqrt(vel_sqr/dist_sqr);
-    motors[1].vel_setpoint = real_steps[1] * sqrt(vel_sqr/dist_sqr);
-
-    // Wait for motors to get to/past destination
-    // TODO:  Make low_level.c have 'move along a line' functionality, with RTOS events when 
-    // a line segment is complete.
-    while(true) {
-        float dot_product = 
-          (motors[0].pos_setpoint - motors[0].encoder.pll_pos) * (real_steps[0]) + 
-          (motors[1].pos_setpoint - motors[1].encoder.pll_pos) * (real_steps[1]);
-        if (dot_product<=0) break;
-
-        // THIS IS A WHILE TRUE BUSY LOOP...  EXPECT TROUBLE
+        // Maximum acceleration in mm/min^2. (multiply by 3600!)
+        settings.acceleration[i] = 
+                motors[i].current_control.current_lim  // Amps
+                 * magic_constant_todo_with_mass      //counts/sec^2/A
+                  / settings.steps_per_mm[i] * 3600;
     }
-    plan_discard_current_block();
-  }
+}
+
+void consume_output(void) {
+    // Gets the current block. Returns NULL if buffer empty
+    plan_block_t *pb = plan_get_current_block();
+
+    if (pb) {
+
+        static float start[2];
+
+        float end[2];
+        end[0] = start[0] + pb->steps[0] * (pb->direction_bits&1)?1:-1;
+        end[1] = start[1] + pb->steps[1] * (pb->direction_bits&2)?1:-1;
+
+        // distance along normalized line (0-1) which we need to switch from 
+        // acceleration to deceleration, assuming no constant speed part.
+        // It is halfway in time and distance when you remove the difference 
+        // between input and output speed.
+        // V|
+        // E|    .
+        // L|   . .
+        //  |  .   .
+        //  | .     .
+        //  |.      |         TIME
+        //  ---------------------->
+
+
+        // TODO
+
+        float vel_limit = 
+            plan_compute_profile_nominal_speed(pb) // mm/min
+            * settings.steps_per_mm[0] / 60;
+        // We begin by accelerating full speed towards the destination!
+        // Note: motors[0].current_control.current_lim is for a single motor,
+        //    yet the flag is shared across motors with pythagoras, so we 
+        //    have spare headroom.
+        current_control_along_line(start, end, motors[0].current_control.current_lim,
+                                   mutex_gcode, NOTIFY_PAST_END | NOTIFY_OVER_LIMIT, vel_limit);
+        osMutexWait(mutex_gcode, osWaitForever);
+        osMutexRelease(mutex_gcode);
+        if (get_notify_flags() & NOTIFY_OVER_LIMIT) {
+            velocity_control_along_line(start, end, vel_limit, 0,
+                                        mutex_gcode, NOTIFY_PAST_END);
+            osMutexWait(mutex_gcode, osWaitForever);
+            osMutexRelease(mutex_gcode);
+        }
+
+        // TODO:
+        // Downward end of trapezoid velocity profile...
+
+        update_settings();
+        plan_discard_current_block();
+    }
 }
 
 
 
-void parse_gcode_line(unsigned char* line, SerialPrintf_t response_interface) {
+void parse_gcode_line(const char * line, SerialPrintf_t response_interface) {
     static int inited = 0;
 
     if (!inited) {
         grbl_init();
+        update_settings();
+        mutex_gcode = osMutexCreate (osMutex (MutexGcode));
         inited=1;
     }
 

@@ -26,7 +26,6 @@ void update_setpoints_constant_velocity() {
         cal_state.notify_flag_mask = 0;
         osMutexRelease(cal_state.done_mutex_id);
     }
-    cal_state.notify_flags = 0;
 }
 
 void update_setpoints_constant_current() {
@@ -56,7 +55,7 @@ void line_control(float* start, float* end, float velocity_feedforward, float cu
     motors[1].update_setpoints_fn = NULL;
 
     // We will release this when we get to the destination or another event occurs.
-    osMutexWait(cal_state.done_mutex_id = done_mutex_id, 0);
+    osMutexWait(cal_state.done_mutex_id = done_mutex_id, osWaitForever);
     
     float steps[2];
     steps[0] = end[0]-start[0];
@@ -91,4 +90,8 @@ void current_control_along_line(float* start, float* end, float current_feedforw
     motors[1].update_setpoints_fn = NULL;
     cal_state.vel_alert_limit = vel_alert_limit;
     line_control(start, end, 0.f, current_feedforward, update_setpoints_constant_current, done_mutex_id, done_flags);
+}
+
+int get_notify_flags(void) {
+    return cal_state.notify_flags;
 }

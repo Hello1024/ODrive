@@ -37,7 +37,7 @@ void velocity_control_along_line(
 Provides the ability to constrain motion to be along a 2D infinite line.
 
 Motion along the line is controlled with a constant current regulator.
-Motion not along the line is regulated with a position regulator to 
+Motion not along the line is regulated with a position regulator to
 bring the machine head back onto the line.
 
 In the typical case, your machine head will accelerate along the path
@@ -45,10 +45,10 @@ as it sees force in the direction from start to end.  The rate of
 acceleration is determined by the mass on the machine head, and is
 uncontrolled.
 
-By setting vel_alert_limit, and either NOTIFY_UNDER_LIMIT or 
-NOTIFY_OVER_LIMIT notify_flags, you will get notified if the velocity (along the line,
-in the direction from start to end) goes past the notification limit you
-have set.
+By setting vel_alert_limit, and either NOTIFY_UNDER_LIMIT or
+NOTIFY_OVER_LIMIT notify_flags, you will get notified if the velocity (along
+the line, in the direction from start to end) goes past the notification
+limit you have set.
 
 Advanced usage:
 
@@ -66,6 +66,10 @@ void current_control_along_line(
     float* start, float* end, float current_feedforward, osMutexId done_mutex_id,
     int notify_flags, float vel_alert_limit);
 
+
+// Returns a bitmask of the flags which have been true anytime since the last
+// line was defined.
+int get_notify_flags(void);
 
 #define NOTIFY_PAST_END (1<<0)
 #define NOTIFY_BEFORE_START (1<<1)

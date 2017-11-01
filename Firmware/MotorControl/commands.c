@@ -326,7 +326,7 @@ void cmd_parse_thread(void const * argument) {
                     if (mode==ASCII) {
                       motor_parse_cmd(parse_buffer, parse_buffer_idx, SERIAL_PRINTF_IS_UART);
                     } else {
-                      parse_gcode_line(parse_buffer, SERIAL_PRINTF_IS_UART);  
+                      parse_gcode_line((const char*) parse_buffer, SERIAL_PRINTF_IS_UART);  
                     }
                     // Reset receieve state machine
                     reset_read_state = true;
