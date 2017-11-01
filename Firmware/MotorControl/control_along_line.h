@@ -29,8 +29,8 @@ Advanced usage:
 This method is thread safe.
 */
 void velocity_control_along_line(
-	float* start, float* end, float velocity_feedforward,
-	float current_feedforward, osMutexId done_mutex_id, int notify_flags);
+    float* start, float* end, float velocity_feedforward,
+    float current_feedforward, osMutexId done_mutex_id, int notify_flags);
 
 
 /*
@@ -63,8 +63,8 @@ Advanced usage:
 This method is thread safe.
 */
 void current_control_along_line(
-	float* start, float* end, float current_feedforward, osMutexId done_mutex_id,
-	int notify_flags, float vel_alert_limit);
+    float* start, float* end, float current_feedforward, osMutexId done_mutex_id,
+    int notify_flags, float vel_alert_limit);
 
 
 #define NOTIFY_PAST_END (1<<0)
