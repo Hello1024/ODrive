@@ -194,7 +194,7 @@ __ALIGN_BEGIN uint8_t usbd_cdc_CfgDesc[] __ALIGN_END =
 
 static uint8_t usbd_rndis_init(USBD_HandleTypeDef  *pdev, uint8_t cfgidx)
 {
-  USBD_LL_OpenEP(pdev, RNDIS_NOTIFICATION_IN_EP, RNDIS_NOTIFICATION_IN_SZ, USBD_EP_TYPE_BULK);
+  USBD_LL_OpenEP(pdev, RNDIS_NOTIFICATION_IN_EP, RNDIS_NOTIFICATION_IN_SZ, USBD_EP_TYPE_INTR);
   USBD_LL_OpenEP(pdev, RNDIS_DATA_IN_EP, RNDIS_DATA_IN_SZ, USBD_EP_TYPE_BULK);
   USBD_LL_OpenEP(pdev, RNDIS_DATA_OUT_EP, RNDIS_DATA_OUT_SZ, USBD_EP_TYPE_BULK);
   USBD_LL_PrepareReceive(pdev, RNDIS_DATA_OUT_EP, (uint8_t*)usb_rx_buffer, RNDIS_DATA_OUT_SZ);
@@ -235,16 +235,6 @@ const uint32_t OIDSupportedList[] =
     OID_802_3_MAC_OPTIONS
 };
 
-int oliverdelay() {
-    static int oliverdelay = 0;
-    oliverdelay++;
-
-    volatile long long test = ((long long)1) << oliverdelay;
-
-    while (test--);
-
-};
-
 
 #define OID_LIST_LENGTH (sizeof(OIDSupportedList) / sizeof(*OIDSupportedList))
 #define ENC_BUF_SIZE    (OID_LIST_LENGTH * 4 + 32)
@@ -252,10 +242,7 @@ int oliverdelay() {
 uint8_t encapsulated_buffer[ENC_BUF_SIZE];
 
 static uint8_t usbd_rndis_setup(USBD_HandleTypeDef  *pdev, USBD_SetupReqTypedef *req)
-{
-
-  oliverdelay();
-    
+{    
   switch (req->bmRequest & USB_REQ_TYPE_MASK)
   {
     case USB_REQ_TYPE_CLASS :
@@ -270,12 +257,8 @@ static uint8_t usbd_rndis_setup(USBD_HandleTypeDef  *pdev, USBD_SetupReqTypedef 
         {
           USBD_CtlPrepareRx(pdev, encapsulated_buffer, req->wLength);          
         }
-      } else {
-        USBD_CtlError (pdev, req);
-        return USBD_FAIL; 
       }
       return USBD_OK;
-      
     default:
 		return USBD_OK;
   }
@@ -418,6 +401,7 @@ void rndis_handle_set_msg(USBD_HandleTypeDef  *pdev)
 	c->MessageLength = sizeof(rndis_set_cmplt_t);
 	c->Status = RNDIS_STATUS_SUCCESS;
 
+
 	switch (oid)
 	{
 		/* Parameters set up in 'Advanced' tab */
@@ -472,6 +456,7 @@ void rndis_handle_set_msg(USBD_HandleTypeDef  *pdev)
 
 static uint8_t usbd_rndis_ep0_recv(USBD_HandleTypeDef  *pdev)
 {
+     
     switch (((rndis_generic_msg_t *)encapsulated_buffer)->MessageType)
 	{
 		case REMOTE_NDIS_INITIALIZE_MSG:
@@ -512,8 +497,8 @@ static uint8_t usbd_rndis_ep0_recv(USBD_HandleTypeDef  *pdev)
 				m->MessageType = REMOTE_NDIS_RESET_CMPLT;
 				m->MessageLength = sizeof(rndis_reset_cmplt_t);
 				m->Status = RNDIS_STATUS_SUCCESS;
-				m->AddressingReset = 1; /* Make it look like we did something */
-			    /* m->AddressingReset = 0; - Windows halts if set to 1 for some reason */
+				m->AddressingReset = 1;  // Make it look like we did something 
+			    // m->AddressingReset = 0; - Windows halts if set to 1 for some reason 
 				USBD_LL_Transmit(pdev, RNDIS_NOTIFICATION_IN_EP, (uint8_t *)"\x01\x00\x00\x00\x00\x00\x00\x00", 8);
 			}
 			break;
@@ -526,7 +511,7 @@ static uint8_t usbd_rndis_ep0_recv(USBD_HandleTypeDef  *pdev)
 				m->MessageLength = sizeof(rndis_keepalive_cmplt_t);
 				m->Status = RNDIS_STATUS_SUCCESS;
 			}
-			/* We have data to send back */
+			// We have data to send back 
 			USBD_LL_Transmit(pdev, RNDIS_NOTIFICATION_IN_EP, (uint8_t *)"\x01\x00\x00\x00\x00\x00\x00\x00", 8);
 			break;
 
@@ -573,10 +558,6 @@ static uint8_t usbd_rndis_data_in(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
 	epnum &= 0x0F;
 
-    // TODO(omattos): remove
-    //USBD_LL_Transmit(pdev, 0x80 | epnum, "mootool", 7);
-    //return USBD_OK;
-
 	if (epnum == (RNDIS_DATA_IN_EP & 0x0F))
 	{
 		rndis_first_tx = false;
@@ -611,19 +592,19 @@ static uint8_t usbd_rndis_data_out(USBD_HandleTypeDef *pdev, uint8_t epnum)
 	static int rndis_received = 0;
 	if (epnum == RNDIS_DATA_OUT_EP)
 	{
-		USBD_EndpointTypeDef *ep = &(pdev->ep_out[epnum]);
-		if (rndis_received + ep->total_length > RNDIS_RX_BUFFER_SIZE)
+        int data_len = USBD_LL_GetRxDataSize (pdev, epnum);
+		if (rndis_received + data_len > RNDIS_RX_BUFFER_SIZE)
 		{
 			usb_eth_stat.rxbad++;
 			rndis_received = 0;
 		}
 		else
 		{
-			if (rndis_received + ep->total_length <= RNDIS_RX_BUFFER_SIZE)
+			if (rndis_received + data_len <= RNDIS_RX_BUFFER_SIZE)
 			{
-				memcpy(&rndis_rx_buffer[rndis_received], usb_rx_buffer, ep->total_length);
-				rndis_received += ep->total_length;
-				if (ep->total_length != RNDIS_DATA_OUT_SZ)
+				memcpy(&rndis_rx_buffer[rndis_received], usb_rx_buffer, data_len);
+				rndis_received += data_len;
+				if (data_len != RNDIS_DATA_OUT_SZ)
 				{
 					handle_packet(rndis_rx_buffer, rndis_received);
 					rndis_received = 0;
