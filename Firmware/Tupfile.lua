@@ -148,6 +148,7 @@ build{
     packages={'stm_platform'},
     sources={
         'Drivers/DRV8301/drv8301.c',
+        'Drivers/Networking/lrndis/rndis-stm32/usbd_rndis_core.c',
         'MotorControl/utils.c',
         'MotorControl/arm_sin_f32.c',
         'MotorControl/arm_cos_f32.c',

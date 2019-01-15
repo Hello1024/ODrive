@@ -116,6 +116,9 @@ void vApplicationIdleHook(void) {
 }
 
 int odrive_main(void) {
+    // halt TODO(omattos):  remove
+    for (;;);
+
     // Load persistent configuration (or defaults)
     load_configuration();
 
