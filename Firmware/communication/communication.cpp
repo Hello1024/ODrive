@@ -3,6 +3,7 @@
 
 #include "communication.h"
 
+#include "networking/network_core.h"
 #include "interface_usb.h"
 #include "interface_uart.h"
 #include "interface_can.hpp"
@@ -202,6 +203,7 @@ void communication_task(void * ctx) {
     
     start_uart_server();
     start_usb_server();
+    start_networking();
     if (board_config.enable_i2c_instead_of_can) {
         start_i2c_server();
     } else {

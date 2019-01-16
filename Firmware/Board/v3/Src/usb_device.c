@@ -56,7 +56,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN Includes */
-#include "Drivers/Networking/lrndis/rndis-stm32/usbd_conf.h"
+#include "communication/networking/lrndis/rndis-stm32/rndis_usbd_conf.h"
 extern USBD_ClassTypeDef usbd_rndis_cb;
 
 /* USER CODE END Includes */
@@ -89,7 +89,7 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   /*Configuration Descriptor*/
   0x09,   /* bLength: Configuration Descriptor size */
   USB_DESC_TYPE_CONFIGURATION,      /* bDescriptorType: Configuration */
-  USB_CDC_CONFIG_DESC_SIZ,                /* wTotalLength:no of returned bytes */
+  USB_COMPOSITE_CONFIG_DESC_SIZ,                /* wTotalLength:no of returned bytes */
   0x00,
   0x05,   /* bNumInterfaces: 5 interfaces (2 for CDC, 1 custom, 2 for rndis) */
   0x01,   /* bConfigurationValue: Configuration value */

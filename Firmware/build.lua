@@ -12,6 +12,22 @@ function string:split(sep)
     return fields
 end
 
+function array_concat(...)
+    local t = {}
+
+    for _, array in ipairs({...}) do
+        if (type(array) == "table") then
+            for j = 1, #array do
+                t[#t+1] = array[j]
+            end
+        else
+            t[#t+1] = array
+        end
+    end
+
+    return t
+end
+
 -- Very basic parser to retrieve variables from a Makefile
 function parse_makefile_vars(makefile)
     vars = {}
@@ -73,6 +89,7 @@ function GCCToolchain(prefix, builddir, compiler_flags, linker_flags)
             extra_outputs = {}
         end
         if src == 'communication/communication.cpp' then extra_inputs = 'build/version.h' end -- TODO: fix hack
+        
         tup.frule{
             inputs= { src, extra_inputs=extra_inputs },
             command=compiler..' -c %f '..

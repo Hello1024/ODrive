@@ -116,9 +116,6 @@ void vApplicationIdleHook(void) {
 }
 
 int odrive_main(void) {
-    // halt TODO(omattos):  remove
-    for (;;);
-
     // Load persistent configuration (or defaults)
     load_configuration();
 
@@ -187,8 +184,13 @@ int odrive_main(void) {
     }
 #endif
     //osDelay(100);
+
     // Init communications (this requires the axis objects to be constructed)
     init_communication();
+
+        // halt TODO(omattos):  remove
+    for (;;);
+
 
     // Start pwm-in compare modules
     // must happen after communication is initialized
