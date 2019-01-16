@@ -557,8 +557,8 @@ static uint8_t usbd_cdc_transfer(void *pdev)
 static uint8_t usbd_rndis_data_in(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
     epnum &= 0x0F;
-//    if (epnum == (RNDIS_DATA_IN_EP & 0x0F))  // TODO(oliver)
-//    {
+    if (epnum == (RNDIS_DATA_IN_EP & 0x0F))  // TODO(oliver)
+    {
         rndis_first_tx = false;
         rndis_sended += sended;
         rndis_tx_size -= sended;
@@ -570,7 +570,7 @@ static uint8_t usbd_rndis_data_in(USBD_HandleTypeDef *pdev, uint8_t epnum)
         }
         sended = 0;
         usbd_cdc_transfer(pdev);
-//    }
+    }
     return USBD_OK;
 }
 
@@ -683,7 +683,7 @@ bool rndis_send(const void *data, int size)
     rndis_tx_ptr = (uint8_t *)data;
     rndis_tx_size = size;
     rndis_sended = 0;
-    usbd_cdc_transfer(rndis_pdev);
+    //usbd_cdc_transfer(rndis_pdev);
     __enable_irq();
 
     return true;
