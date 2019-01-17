@@ -76,7 +76,7 @@ fs_open(struct fs_file *file, const char *name)
   file->is_custom_file = 0;
 #endif /* LWIP_HTTPD_CUSTOM_FILES */
 
-  for (f = NULL; f != NULL; f = f->next) {  // oliver todo
+  for (f = fs_root_file; f != NULL; f = f->next) {
     if (!strcmp(name, (char *)f->name)) {
       file->data = (const char *)f->data;
       file->len = f->len;

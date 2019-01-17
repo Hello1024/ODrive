@@ -47,4 +47,7 @@ struct fsdata_file {
 #endif /* HTTPD_PRECALCULATED_CHECKSUM */
 };
 
+const struct fsdata_file* fs_root_file;
+
+
 #endif /* __FSDATA_H__ */

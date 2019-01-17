@@ -574,14 +574,6 @@ static uint8_t usbd_rndis_data_in(USBD_HandleTypeDef *pdev, uint8_t epnum)
     return USBD_OK;
 }
 
-void rndis_receive_complete(void)
-{
-    __disable_irq();  // We are on the application thread.
-    //USBD_LL_PrepareReceive(rndis_pdev, RNDIS_DATA_OUT_EP, (uint8_t*)usb_rx_buffer, RNDIS_DATA_OUT_SZ);
-    __enable_irq();
-}
-
-
 static void handle_packet(USBD_HandleTypeDef *pdev, const char *data, int size)
 {
     rndis_data_packet_t *p;
@@ -594,12 +586,9 @@ static void handle_packet(USBD_HandleTypeDef *pdev, const char *data, int size)
         return;
     }
     usb_eth_stat.rxok++;
+    rndis_pdev = pdev;
     if (rndis_net_handler != NULL) {
-        // async
         rndis_net_handler(&rndis_rx_buffer[p->DataOffset + offsetof(rndis_data_packet_t, DataOffset)], p->DataLength);
-    } else {
-        // Call our own callback right now to discard the packet and be ready for the next.
-        rndis_receive_complete();
     }
 }
 
@@ -625,10 +614,6 @@ static uint8_t usbd_rndis_data_out(USBD_HandleTypeDef *pdev, uint8_t epnum)
                 {
                     handle_packet(pdev, rndis_rx_buffer, rndis_received);
                     rndis_received = 0;
-                    // Don't call USBD_LL_PrepareReceive(),
-                    // because we need to wait for the application callback.
-                    //return USBD_OK;  // TODO(omattos)
-
                 }
             }
             else
@@ -674,17 +659,23 @@ bool rndis_can_send(void)
 
 bool rndis_send(const void *data, int size)
 {
-    if (size <= 0 ||
-        size > ETH_MAX_PACKET_SIZE ||
-        rndis_tx_size > 0) return false;
 
     __disable_irq();
+    if (size <= 0 ||
+        size > ETH_MAX_PACKET_SIZE ||
+        rndis_tx_size > 0)
+    {
+        __enable_irq();
+        return false;
+    }
+
     rndis_first_tx = true;
     rndis_tx_ptr = (uint8_t *)data;
     rndis_tx_size = size;
     rndis_sended = 0;
-    //usbd_cdc_transfer(rndis_pdev);
+    //
     __enable_irq();
+    //usbd_cdc_transfer(rndis_pdev);
 
     return true;
 }

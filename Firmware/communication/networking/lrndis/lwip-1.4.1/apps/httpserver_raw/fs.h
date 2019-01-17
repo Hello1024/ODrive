@@ -43,7 +43,7 @@
  *    Called to free resources allocated by fs_open_custom().
  */
 #ifndef LWIP_HTTPD_CUSTOM_FILES
-#define LWIP_HTTPD_CUSTOM_FILES       0
+#define LWIP_HTTPD_CUSTOM_FILES       1
 #endif
 
 /** Set this to 1 to support fs_read() to dynamically read file data.

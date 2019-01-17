@@ -43,7 +43,7 @@ static dhcp_config_t dhcp_config =
 {
     {192, 168, 7, 1}, 67, /* server address, port */
     {192, 168, 7, 1},     /* dns server */
-    "stm",                /* dns suffix */
+    "odrive",                /* dns suffix */
     NUM_DHCP_ENTRY,       /* num entry */
     entries               /* entries */
 };
@@ -58,8 +58,9 @@ struct netif netif_data;
 
 const char *network_rx_data = NULL;
 int network_rx_size;
-osSemaphoreId sem_network_wakeup;
-osSemaphoreDef(sem_network_wakeup);
+
+osMessageQDef(net_message_q, 5, struct pbuf* ); // Declare a message queue
+osMessageQId (net_message_q_id);           // Declare an ID for the message queue
 
 osSemaphoreId sem_network_tx;
 osSemaphoreDef(sem_network_tx);
@@ -74,11 +75,18 @@ void rndis_handler(const char *data, int size)
     if (data) {
         // We don't want to run
         // the whole IP stack in the interrupt, so make a copy
-        // and use a semaphore.  The data buffer stays valid 
-        // till we call rndis_receive_complete();
-        network_rx_data = data;
-        network_rx_size = size;
-        osSemaphoreRelease(sem_network_wakeup);
+        // and use a semaphore.
+        
+        struct pbuf* frame = pbuf_alloc(PBUF_RAW, size, PBUF_POOL);
+        if (!frame)  // Out of memory drop
+            return; 
+
+        memcpy(frame->payload, data, size);
+        frame->len = size;
+
+        if (osMessagePut(net_message_q_id, (uint32_t)frame, 0) != osOK) {
+            pbuf_free(frame);
+        }
     } else {
         // NULL data means rndis is good to TX another packet
         osSemaphoreRelease(sem_network_tx);
@@ -88,8 +96,8 @@ void rndis_handler(const char *data, int size)
 // Run in timer thread.  Wake up the main thread.
 void timer_handler()
 {
-    // Ignore error if they are all released.
-    osSemaphoreRelease(sem_network_wakeup);
+    // Ignore error if queue is full.
+    osMessagePut(net_message_q_id, 0, 0);
 }
 
 // Used inside lwip
@@ -97,20 +105,6 @@ u32_t sys_now(void) {
     return (u32_t)((uint64_t)osKernelSysTick() * 1000 / osKernelSysTickFrequency);
 }
 
-void handle_received_packet() {
-    struct pbuf *frame;
-    frame = pbuf_alloc(PBUF_RAW, network_rx_size, PBUF_POOL);
-    if (!frame)
-        return; 
-    memcpy(frame->payload, network_rx_data, network_rx_size);
-    network_rx_data = NULL;
-    frame->len = network_rx_size;
-    // Let USB receive the next packet.  If this leaves too many stalls, 
-    // we can move buffer allocation into the interrupt handler.
-    rndis_receive_complete();
-    ethernet_input(frame, &netif_data);
-    pbuf_free(frame);
-}
 
 
 err_t linkoutput_fn(struct netif *netif, struct pbuf *p)
@@ -153,13 +147,12 @@ err_t netif_init_cb(struct netif *netif)
 
 static void init_lwip()
 {
-    sem_network_wakeup = osSemaphoreCreate(osSemaphore(sem_network_wakeup), 1);
+    net_message_q_id = osMessageCreate(osMessageQ(net_message_q), NULL);
     sem_network_tx = osSemaphoreCreate(osSemaphore(sem_network_tx), 1);
     rndis_net_handler = rndis_handler;
 
-    //osTimerId timer = osTimerCreate(osTimer(tmr_network), osTimerPeriodic, (void *)0);
-    //osTimerStart(timer, TCP_TMR_INTERVAL);    
-    // TODO(omattos): rmove
+    osTimerId timer = osTimerCreate(osTimer(tmr_network), osTimerPeriodic, (void *)0);
+    osTimerStart(timer, TCP_TMR_INTERVAL);
     struct netif  *netif = &netif_data;
 
     lwip_init();
@@ -172,7 +165,7 @@ static void init_lwip()
 
 static bool dns_query_proc(const char *name, ip_addr_t *addr)
 {
-    if (strcmp(name, "run.stm") == 0 || strcmp(name, "www.run.stm") == 0)
+    if (strcmp(name, "control.odrive") == 0 || strcmp(name, "www.control.odrive") == 0)
     {
         addr->addr = *(uint32_t *)ipaddr;
         return true;
@@ -264,14 +257,16 @@ static void network_thread_main()
     httpd_init();
 
     while(true) {
-        osSemaphoreWait(sem_network_wakeup, osWaitForever);
+        osEvent event = osMessageGet(net_message_q_id, osWaitForever);
+        if (event.status == osEventMessage) {
 
-        if (network_rx_data) handle_received_packet();
-        
-        rndis_send("HELLO WORLD Hello World", 24);
-
-        // TODO:  make conditional.
-        tcp_tmr();
+            if (event.value.p) {
+                ethernet_input(event.value.p, &netif_data);
+                pbuf_free(event.value.p);
+            } else {
+                tcp_tmr();  
+            }
+        }
     }
 }
 

@@ -54,8 +54,4 @@ extern rndis_net_handler_t rndis_net_handler;
 bool   rndis_can_send(void);
 bool   rndis_send(const void *data, int size);
 
-// Call to free up the interface to receive
-// another packet after being sent one by the net_handler.
-void   rndis_receive_complete(void);
-
 #endif
