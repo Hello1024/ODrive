@@ -153,7 +153,7 @@ tup.frule{
 network_sources = {
     'build/fsdata.c',
     'communication/networking/network_core.c',
-    'communication/networking/url_handlers.c',
+    'communication/networking/url_handlers.cpp',
     'communication/networking/lrndis/rndis-stm32/usbd_rndis_core.c',
     'communication/networking/lrndis/dhcp-server/dhserver.c',
     'communication/networking/lrndis/dns-server/dnserver.c',

@@ -1125,7 +1125,7 @@ class EndpointProvider {
 public:
     virtual size_t get_endpoint_count() = 0;
     virtual void write_json(size_t id, StreamSink* output) = 0;
-    virtual Endpoint* get_by_name(char * name, size_t length) = 0;
+    virtual Endpoint* get_by_name(const char * name, size_t length) = 0;
     virtual void register_endpoints(Endpoint** list, size_t id, size_t length) = 0;
 };
 
@@ -1142,13 +1142,13 @@ public:
     void register_endpoints(Endpoint** list, size_t id, size_t length) final {
         return member_list_.register_endpoints(list, id, length);
     }
-    Endpoint* get_by_name(char * name, size_t length) final {
+    Endpoint* get_by_name(const char * name, size_t length) final {
+        char mutable_name[length];
         for (size_t i = 0; i < length; i++) {
-            if (name[i] == '.')
-                name[i] = 0;
+            mutable_name[i] = name[i];
+            if (name[i] == '.') mutable_name[i]=0;
         }
-        name[length-1] = 0;
-        return member_list_.get_by_name(name, length);
+        return member_list_.get_by_name(mutable_name, length);
     }
     T& member_list_;
 };

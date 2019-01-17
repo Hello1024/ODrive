@@ -173,71 +173,6 @@ static bool dns_query_proc(const char *name, ip_addr_t *addr)
     return false;
 }
 
-static const char *state_cgi_handler(int index, int n_params, char *params[], char *values[])
-{
-    return "/state.shtml";
-}
-
-bool led_g = false;
-bool led_o = false;
-bool led_r = false;
-
-static const char *ctl_cgi_handler(int index, int n_params, char *params[], char *values[])
-{
-    // Can do stuff here!
-
-    return "/state.shtml";
-}
-
-static const char *ssi_tags_table[] =
-{
-    "systick", /* 0 */
-    "btn",     /* 1 */
-    "acc",     /* 2 */
-    "ledg",    /* 3 */
-    "ledo",    /* 4 */
-    "ledr"     /* 5 */
-};
-
-static const tCGI cgi_uri_table[] =
-{
-    { "/state.cgi", state_cgi_handler },
-    { "/ctl.cgi",   ctl_cgi_handler },
-};
-
-static u16_t ssi_handler(int index, char *insert, int ins_len)
-{
-    int res;
-
-    if (ins_len < 32) return 0;
-
-    switch (index)
-    {
-    case 0: /* systick */
-        break;
-    case 1: /* btn */
-        break;
-    case 2: /* acc */
-    {
-        break;
-    }
-    case 3: /* ledg */
-        *insert = '0' + (led_g & 1);
-        res = 1;
-        break;
-    case 4: /* ledo */
-        *insert = '0' + (led_o & 1);
-        res = 1;
-        break;
-    case 5: /* ledr */
-        *insert = '0' + (led_r & 1);
-        res = 1;
-        break;
-    }
-
-    return res;
-}
-
 static void network_thread_main()
 {
     
@@ -249,11 +184,6 @@ static void network_thread_main()
 
     while (dnserv_init(PADDR(ipaddr), 53, dns_query_proc) != ERR_OK) ;
 
-    // halt TODO(omattos):  remove
-   // for (;;);
-
-    http_set_cgi_handlers(cgi_uri_table, sizeof(cgi_uri_table) / sizeof(tCGI));
-    http_set_ssi_handler(ssi_handler, ssi_tags_table, sizeof(ssi_tags_table) / sizeof(char *));
     httpd_init();
 
     while(true) {
