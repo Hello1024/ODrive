@@ -49,17 +49,22 @@ private:
 };
 
 
+char* getJSONSchema() {
+
+}
+
+
 int fs_open_custom(struct fs_file *file, const char *name) {
-    Endpoint* endpoint = application_endpoints_->get_by_name(name+1, strlen(name+1));
-	if (!endpoint) {
-	    return 0;
-	} else {
-		int bufsize = 800;
+    file->http_header_included = 1;
+
+	if (!strcmp(name, "/api"))
+    {
+		int bufsize = 8000;
 
 	    char* data = new char[bufsize];
 	    file->data = data;
 	    
-	    strncpy(data, response, 80);
+	    strncpy(data, response, bufsize);
 	    data += strlen(response);
 	    int len = bufsize - strlen(response);
 
@@ -69,11 +74,30 @@ int fs_open_custom(struct fs_file *file, const char *name) {
 
     	file->len = bufsize - a.len();
         file->index = file->len;
-        file->pextension = NULL;
-        file->http_header_included = 1;
 
         return 1;
 	}
+
+	if (strlen(name)<=5) return 0;
+
+	Endpoint* endpoint = application_endpoints_->get_by_name(name+5, strlen(name+5));
+	if (endpoint) {
+		int bufsize = 100;
+
+	    char* data = new char[bufsize];
+	    file->data = data;
+	    
+	    strncpy(data, response, sufsize);
+	    data += strlen(response);
+	    int len = bufsize - strlen(response);
+
+	    endpoint.get_string(data, len);
+
+	    file->len = strlen(file->data);
+        file->index = file->len;
+        return 1;
+	}
+	return 0;
 
 }
 

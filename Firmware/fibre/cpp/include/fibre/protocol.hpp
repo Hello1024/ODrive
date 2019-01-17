@@ -1146,7 +1146,7 @@ public:
         char mutable_name[length];
         for (size_t i = 0; i < length; i++) {
             mutable_name[i] = name[i];
-            if (name[i] == '.') mutable_name[i]=0;
+            if (name[i] == '.' || name[i] == '/' ) mutable_name[i]=0;
         }
         return member_list_.get_by_name(mutable_name, length);
     }
