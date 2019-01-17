@@ -49,11 +49,6 @@ private:
 };
 
 
-char* getJSONSchema() {
-
-}
-
-
 int fs_open_custom(struct fs_file *file, const char *name) {
     file->http_header_included = 1;
 
@@ -87,11 +82,11 @@ int fs_open_custom(struct fs_file *file, const char *name) {
 	    char* data = new char[bufsize];
 	    file->data = data;
 	    
-	    strncpy(data, response, sufsize);
+	    strncpy(data, response, bufsize);
 	    data += strlen(response);
 	    int len = bufsize - strlen(response);
 
-	    endpoint.get_string(data, len);
+	    endpoint->get_string(data, len);
 
 	    file->len = strlen(file->data);
         file->index = file->len;
