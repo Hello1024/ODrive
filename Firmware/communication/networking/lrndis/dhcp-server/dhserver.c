@@ -243,9 +243,9 @@ static void udp_recv_proc(void *arg, struct udp_pcb *upcb, struct pbuf *p, struc
 				DHCP_OFFER,
 				config->domain,
 				*(uint32_t *)config->dns,
-				entry->lease, 
+				entry->lease,
 				*(uint32_t *)config->addr,
-				*(uint32_t *)config->addr, 
+				0, 
 				*(uint32_t *)entry->subnet);
 
 			pp = pbuf_alloc(PBUF_TRANSPORT, sizeof(dhcp_data), PBUF_POOL);
@@ -287,7 +287,7 @@ static void udp_recv_proc(void *arg, struct udp_pcb *upcb, struct pbuf *p, struc
 				*(uint32_t *)config->dns,
 				entry->lease, 
 				*(uint32_t *)config->addr,
-				*(uint32_t *)config->addr, 
+				0, 
 				*(uint32_t *)entry->subnet);
 
 			/* 6. send ACK */

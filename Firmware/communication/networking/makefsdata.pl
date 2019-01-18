@@ -19,11 +19,12 @@ while($file = <FILES>) {
     
     open(HEADER, "> /tmp/header") || die $!;
     if($file =~ /404/) {
-	print(HEADER "HTTP/1.0 404 File not found\r\n");
+	print(HEADER "HTTP/1.1 404 File not found\r\n");
     } else {
-	print(HEADER "HTTP/1.0 200 OK\r\n");
+	print(HEADER "HTTP/1.1 200 OK\r\n");
     }
     print(HEADER "Server: An ODrive\r\n");
+    print(HEADER "Content-Encoding: gzip\r\n");
     if($file =~ /\.html$/) {
 	print(HEADER "Content-type: text/html\r\n");
     } elsif($file =~ /\.gif$/) {
@@ -32,8 +33,8 @@ while($file = <FILES>) {
 	print(HEADER "Content-type: image/png\r\n");
     } elsif($file =~ /\.jpg$/) {
 	print(HEADER "Content-type: image/jpeg\r\n");
-    } elsif($file =~ /\.class$/) {
-	print(HEADER "Content-type: application/octet-stream\r\n");
+    } elsif($file =~ /\.js$/) {
+	print(HEADER "Content-type: text/javascript\r\n");
     } elsif($file =~ /\.ram$/) {
 	print(HEADER "Content-type: audio/x-pn-realaudio\r\n");    
     } else {
@@ -43,9 +44,11 @@ while($file = <FILES>) {
     close(HEADER);
 
     unless($file =~ /\.plain$/ || $file =~ /cgi/) {
-	system("cat /tmp/header $file > /tmp/file");
+       system("cat $file | gzip -9 > /tmp/gzfile");
+	   system("cat /tmp/header /tmp/gzfile > /tmp/file");
+       unlink("/tmp/gzfile");
     } else {
-	system("cp $file /tmp/file");
+	   system("cp $file /tmp/file");
     }
     
     open(FILE, "/tmp/file");
