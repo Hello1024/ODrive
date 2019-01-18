@@ -35,8 +35,8 @@ while($file = <FILES>) {
 	print(HEADER "Content-type: image/jpeg\r\n");
     } elsif($file =~ /\.js$/) {
 	print(HEADER "Content-type: text/javascript\r\n");
-    } elsif($file =~ /\.ram$/) {
-	print(HEADER "Content-type: audio/x-pn-realaudio\r\n");    
+    } elsif($file =~ /\.css$/) {
+	print(HEADER "Content-type: text/css\r\n");    
     } else {
 	print(HEADER "Content-type: text/plain\r\n");
     }

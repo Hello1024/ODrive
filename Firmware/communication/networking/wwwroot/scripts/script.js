@@ -74,21 +74,22 @@ const r = new Router(
 //////////// ODrive API Connector
 
 class ODrive {
-  constructor(url = 'http://odrive.control') {
+  constructor(url = '/api') {
     this.url = url;
   }
 
   
   async connect() {
-    this.schema = await (await fetch(this.url + '/api')).json();
+    this.schema = await (await fetch(this.url)).json();
   }
 
   async setParam(param, value) {
-    return (await fetch(this.url + '/api/' + param, {method: 'POST', body: value})).text()
+    // The future...
+    //return (await fetch(this.url + '/api/' + param, {method: 'POST', body: value})).text()
   }
 
   async getParam(...params) {
-    return scopeParam(0, 1, ...params)[0];
+    return this.scopeParam(0, 1, ...params)[0];
   }
 
   async scopeParam(interval, count, ...params) {
@@ -96,16 +97,16 @@ class ODrive {
     //return fetch(this.url + '/api/scope' + param, {method: 'POST', body: params})
 
     // The now...   browser does timekeeping...  badly...
-    all_results = []
+    var all_results = [];
     for (var i=0; i< count; i++) {
 
       var requests = params.map(
-        param => fetch(this.url + '/api/' + param).then(x => x.text())
-        )
+        param => fetch(this.url + '/' + param).then(x => x.text())
+        );
 
       requests.push(timeout(interval));
 
-      results = await Promise.all(requests);
+      var results = await Promise.all(requests);
 
       results.pop();
       all_results.push(results);

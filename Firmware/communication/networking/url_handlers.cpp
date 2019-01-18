@@ -59,13 +59,12 @@ int fs_open_custom(struct fs_file *file, const char *name) {
 	    char* data = new char[bufsize];
 	    file->data = data;
 	    
-	    strncpy(data, response, bufsize);
-	    data += strlen(response);
-	    int len = bufsize - strlen(response);
+        PartitioningStreamSink a(0, bufsize, (uint8_t*)data);
 
-        PartitioningStreamSink a(0, len, (uint8_t*)data);
-
+        a.process_bytes((uint8_t*)response, sizeof(response)-1, NULL);
+        a.process_bytes((uint8_t*)"[", 1, NULL);
 	    application_endpoints_->write_json(0, &a);
+        a.process_bytes((uint8_t*)"]", 1, NULL);
 
     	file->len = bufsize - a.len();
         file->index = file->len;
