@@ -74,6 +74,8 @@ extern USBD_ClassTypeDef usbd_rndis_cb;
 /* USB Device Core handle declaration. */
 USBD_HandleTypeDef hUsbDeviceFS;
 
+int usbd_composite_next_ep0_recv_for_cdc = 0;
+
 /*
  * -- Insert your variables declaration here --
  */
@@ -102,7 +104,7 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   /* Interface Association Descriptor: CDC device (virtual com port) */
   0x08,   /* bLength: IAD size */
   0x0B,   /* bDescriptorType: Interface Association Descriptor */
-  0x00,   /* bFirstInterface */
+  CDC_COMM_IFACE,   /* bFirstInterface */
   0x02,   /* bInterfaceCount */
   0x02,   /* bFunctionClass: Communication Interface Class */
   0x02,   /* bFunctionSubClass: Abstract Control Model */
@@ -115,7 +117,7 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   0x09,   /* bLength: Interface Descriptor size */
   USB_DESC_TYPE_INTERFACE,  /* bDescriptorType: Interface */
   /* Interface descriptor type */
-  0x00,   /* bInterfaceNumber: Number of Interface */
+  CDC_COMM_IFACE,   /* bInterfaceNumber: Number of Interface */
   0x00,   /* bAlternateSetting: Alternate setting */
   0x01,   /* bNumEndpoints: One endpoints used */
   0x02,   /* bInterfaceClass: Communication Interface Class */
@@ -147,8 +149,8 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   0x05,   /* bFunctionLength */
   0x24,   /* bDescriptorType: CS_INTERFACE */
   0x06,   /* bDescriptorSubtype: Union func desc */
-  0x00,   /* bMasterInterface: Communication class interface */
-  0x01,   /* bSlaveInterface0: Data Class Interface */
+  CDC_COMM_IFACE,   /* bMasterInterface: Communication class interface */
+  CDC_DATA_IFACE,   /* bSlaveInterface0: Data Class Interface */
 
   /*Endpoint 2 Descriptor*/
   0x07,                           /* bLength: Endpoint Descriptor size */
@@ -163,7 +165,7 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   /*Data class interface descriptor*/
   0x09,   /* bLength: Endpoint Descriptor size */
   USB_DESC_TYPE_INTERFACE,  /* bDescriptorType: */
-  0x01,   /* bInterfaceNumber: Number of Interface */
+  CDC_DATA_IFACE,   /* bInterfaceNumber: Number of Interface */
   0x00,   /* bAlternateSetting: Alternate setting */
   0x02,   /* bNumEndpoints: Two endpoints used */
   0x0A,   /* bInterfaceClass: CDC */
@@ -194,7 +196,7 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   /* Interface Association Descriptor: custom device */
   0x08,   /* bLength: IAD size */
   0x0B,   /* bDescriptorType: Interface Association Descriptor */
-  0x02,   /* bFirstInterface */
+  CDC_ODRIVE_IFACE,   /* bFirstInterface */
   0x01,   /* bInterfaceCount */
   0x00,   /* bFunctionClass: */
   0x00,   /* bFunctionSubClass: */
@@ -206,7 +208,7 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   /*Data class interface descriptor*/
   0x09,   /* bLength: Endpoint Descriptor size */
   USB_DESC_TYPE_INTERFACE,  /* bDescriptorType: */
-  0x02,   /* bInterfaceNumber: Number of Interface */
+  CDC_ODRIVE_IFACE,   /* bInterfaceNumber: Number of Interface */
   0x00,   /* bAlternateSetting: Alternate setting */
   0x02,   /* bNumEndpoints: Two endpoints used */
   0x00,   /* bInterfaceClass: vendor specific */
@@ -242,7 +244,7 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
 
   0x08, /* bLength */
   0x0B, /* bDescriptorType */
-  0x03, /* bFirstInterface */
+  RNDIS_CONTROL_IFACE, /* bFirstInterface */
   0x02, /* bInterfaceCount */
   0xE0, /* bFunctionClass (Wireless Controller) */
   0x01, /* bFunctionSubClass */
@@ -252,8 +254,8 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   /* Interface 3 descriptor */
   
   9,                             /* bLength */
-  USB_DESC_TYPE_INTERFACE, /* bDescriptorType = INTERFACE */
-  0x03,                          /* bInterfaceNumber */
+  USB_DESC_TYPE_INTERFACE,       /* bDescriptorType = INTERFACE */
+  RNDIS_CONTROL_IFACE,           /* bInterfaceNumber */
   0x00,                          /* bAlternateSetting */
   1,                             /* bNumEndpoints */
   0xE0,                          /* bInterfaceClass: Wireless Controller */
@@ -287,13 +289,13 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   0x05, /* bFunctionLength */
   0x24, /* bDescriptorType = CS Interface */
   0x06, /* bDescriptorSubtype = Union */
-  0x03, /* bControlInterface = "RNDIS Communications Control" */
-  0x04, /* bSubordinateInterface0 = "RNDIS Ethernet Data" */
+  RNDIS_CONTROL_IFACE, /* bControlInterface = "RNDIS Communications Control" */
+  RNDIS_DATA_IFACE, /* bSubordinateInterface0 = "RNDIS Ethernet Data" */
 
   /* Endpoint descriptors for Communication Class Interface */
 
   7,                            /* bLength         = 7 bytes */
-  USB_DESC_TYPE_ENDPOINT, /* bDescriptorType = ENDPOINT */
+  USB_DESC_TYPE_ENDPOINT,       /* bDescriptorType = ENDPOINT */
   RNDIS_NOTIFICATION_IN_EP,     /* bEndpointAddr   = IN - EP3 */
   0x03,                         /* bmAttributes    = Interrupt endpoint */
   8, 0,                         /* wMaxPacketSize */
@@ -302,8 +304,8 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
   /* Interface 4 descriptor */
 
   9,                             /* bLength */
-  USB_DESC_TYPE_INTERFACE, /* bDescriptorType */
-  0x04,                          /* bInterfaceNumber */
+  USB_DESC_TYPE_INTERFACE,       /* bDescriptorType */
+  RNDIS_DATA_IFACE,                /* bInterfaceNumber */
   0x00,                          /* bAlternateSetting */
   2,                             /* bNumEndpoints */
   0x0A,                          /* bInterfaceClass: CDC */
@@ -342,27 +344,74 @@ static uint8_t  USBD_COMPOSITE_DeInit (USBD_HandleTypeDef *pdev,
       || usbd_rndis_cb.DeInit(pdev, cfgidx);
 }
 
+static inline uint8_t ep_is_for_cdc(uint8_t epnum) {
+  switch (epnum) {
+    case CDC_IN_EP:
+    case CDC_OUT_EP:
+    case CDC_CMD_EP:
+    case ODRIVE_IN_EP:
+    case ODRIVE_OUT_EP:
+      return 1;
+    default:
+      return 0;
+  }
+}
 static uint8_t  USBD_COMPOSITE_Setup (USBD_HandleTypeDef *pdev, 
                                 USBD_SetupReqTypedef *req) {
-  return USBD_CDC.Setup(pdev, req)
-      && usbd_rndis_cb.Setup(pdev, req);
+  // Se need to see who this setup is for...
+  switch (req->bmRequest & USB_REQ_RECIPIENT_MASK) {
+    case USB_REQ_RECIPIENT_DEVICE:
+      // hopefully lower layers deal with this for us.
+      return USBD_OK;
+    case USB_REQ_RECIPIENT_INTERFACE:
+      switch (req->wIndex) {
+//        case CDC_COMM_IFACE:
+//        case CDC_DATA_IFACE:
+//        case CDC_ODRIVE_IFACE:
+//          usbd_composite_next_ep0_recv_for_cdc = 1;
+//          return USBD_CDC.Setup(pdev, req);
+        case RNDIS_CONTROL_IFACE:
+        case RNDIS_DATA_IFACE:
+          usbd_composite_next_ep0_recv_for_cdc = 0;
+          return usbd_rndis_cb.Setup(pdev, req);
+        default:
+          return USBD_OK;
+      }
+    case USB_REQ_RECIPIENT_ENDPOINT:
+      if (ep_is_for_cdc(req->wIndex)) {
+          usbd_composite_next_ep0_recv_for_cdc = 1;
+          return USBD_CDC.Setup(pdev, req);
+      } else {
+          // Also handles default case.
+          usbd_composite_next_ep0_recv_for_cdc = 0;
+          return usbd_rndis_cb.Setup(pdev, req);
+      }
+    default:
+      return USBD_OK;
+  }
 }
 
 static uint8_t  USBD_COMPOSITE_EP0_RxReady (USBD_HandleTypeDef *pdev) {
-  return USBD_CDC.EP0_RxReady(pdev)
-      && usbd_rndis_cb.EP0_RxReady(pdev);
+  // This approach might not be valid if the next
+  // EP0 packet gets setup before this one gets received.
+  if (usbd_composite_next_ep0_recv_for_cdc)
+    return USBD_CDC.EP0_RxReady(pdev);
+  else
+    return usbd_rndis_cb.EP0_RxReady(pdev);
 }
 
 static uint8_t  USBD_COMPOSITE_DataIn (USBD_HandleTypeDef *pdev, 
-                                 uint8_t epnum) {
-  return USBD_CDC.DataIn(pdev, epnum)
-      && usbd_rndis_cb.DataIn(pdev, epnum);
+                                       uint8_t epnum) {
+  if (ep_is_for_cdc(epnum | 0x80))
+    return USBD_CDC.DataIn(pdev, epnum);
+  return usbd_rndis_cb.DataIn(pdev, epnum);
 }
 
 static uint8_t  USBD_COMPOSITE_DataOut (USBD_HandleTypeDef *pdev, 
-                                 uint8_t epnum) {
-  return USBD_CDC.DataOut(pdev, epnum)
-      && usbd_rndis_cb.DataOut(pdev, epnum);
+                                        uint8_t epnum) {
+  if (ep_is_for_cdc(epnum))
+    return USBD_CDC.DataOut(pdev, epnum);
+  return usbd_rndis_cb.DataOut(pdev, epnum);
 }
 
 static uint8_t  USBD_COMPOSITE_SOF (USBD_HandleTypeDef *pdev) {

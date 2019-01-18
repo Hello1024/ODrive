@@ -53,7 +53,11 @@
 #define CDC_OUT_EP                                  0x01  /* EP1 for data OUT */
 #define CDC_CMD_EP                                  0x82  /* EP2 for CDC commands */
 #define ODRIVE_IN_EP                                0x83  /* EP3 IN: ODrive device TX endpoint */
-#define ODRIVE_OUT_EP                               0x03  /* EP3 OUT: ODrive device RX endpoint */
+#define ODRIVE_OUT_EP                               0x02  /* EP3 OUT: ODrive device RX endpoint */
+
+#define CDC_COMM_IFACE                              0x0  
+#define CDC_DATA_IFACE                              (CDC_COMM_IFACE+1)  
+#define CDC_ODRIVE_IFACE                            0x2 
 
 /* CDC Endpoints parameters: you can fine tune these values depending on the needed baudrates and performance. */
 #define CDC_DATA_HS_MAX_PACKET_SIZE                 64  /* Endpoint IN & OUT Packet size */

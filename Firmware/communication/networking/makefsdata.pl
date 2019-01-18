@@ -23,7 +23,6 @@ while($file = <FILES>) {
     } else {
 	print(HEADER "HTTP/1.1 200 OK\r\n");
     }
-    print(HEADER "Server: An ODrive\r\n");
     print(HEADER "Content-Encoding: gzip\r\n");
     if($file =~ /\.html$/) {
 	print(HEADER "Content-type: text/html\r\n");

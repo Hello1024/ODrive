@@ -30,17 +30,19 @@
 
 // #include "usb_conf.h"
 
-//#define RNDIS_NOTIFICATION_IN_EP 0x81
-//#define RNDIS_DATA_IN_EP         0x82
-//#define RNDIS_DATA_OUT_EP        0x03
-
-#define RNDIS_NOTIFICATION_IN_EP 0x81
-#define RNDIS_DATA_IN_EP         0x82
-#define RNDIS_DATA_OUT_EP        0x03
+// These need to not overlap with interface and EP numbers 
+// used by CDC and ODrive interfaces
+#define RNDIS_NOTIFICATION_IN_EP 0x85
+#define RNDIS_DATA_IN_EP         0x84
+#define RNDIS_DATA_OUT_EP        0x01
 
 #define RNDIS_NOTIFICATION_IN_SZ 0x08
 #define RNDIS_DATA_IN_SZ         0x40
 #define RNDIS_DATA_OUT_SZ        0x40
+
+#define RNDIS_CONTROL_IFACE      0x0
+#define RNDIS_DATA_IFACE         (RNDIS_CONTROL_IFACE+1)
+
 
 #define USBD_CFG_MAX_NUM         1
 #define USB_MAX_STR_DESC_SIZ     64

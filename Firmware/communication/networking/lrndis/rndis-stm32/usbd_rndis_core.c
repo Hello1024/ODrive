@@ -93,32 +93,34 @@ __ALIGN_BEGIN static __IO uint32_t  usbd_cdc_AltSet  __ALIGN_END = 0;
 __ALIGN_BEGIN uint8_t usbd_cdc_CfgDesc[] __ALIGN_END =
 {
     /* Configuration descriptor */
-
     9,                                 /* bLength         = 9 bytes. */
     USB_CONFIGURATION_DESCRIPTOR_TYPE, /* bDescriptorType = CONFIGURATION */
     0xDE, 0xAD,                        /* wTotalLength    = sizeof(usbd_cdc_CfgDesc) */
-    0x02,                              /* bNumInterfaces  = 2 (RNDIS spec). */
+    0x03,                              /* bNumInterfaces  = 2 (RNDIS spec). */
     0x01,                              /* bConfValue      = 1 */
     0x00,                              /* iConfiguration  = unused. */
     0xC0,                              /* bmAttributes    = Self-Powered & bus powered. */
     0x01,                              /* MaxPower        = x2mA */
 
+
     /* IAD descriptor */
 
     0x08, /* bLength */
     0x0B, /* bDescriptorType */
-    0x00, /* bFirstInterface */
+    RNDIS_CONTROL_IFACE, /* bFirstInterface */
     0x02, /* bInterfaceCount */
     0xE0, /* bFunctionClass (Wireless Controller) */
     0x01, /* bFunctionSubClass */
     0x03, /* bFunctionProtocol */
     0x00, /* iFunction */
 
+
+
     /* Interface 0 descriptor */
     
     9,                             /* bLength */
     USB_INTERFACE_DESCRIPTOR_TYPE, /* bDescriptorType = INTERFACE */
-    0x00,                          /* bInterfaceNumber */
+    RNDIS_CONTROL_IFACE,           /* bInterfaceNumber */
     0x00,                          /* bAlternateSetting */
     1,                             /* bNumEndpoints */
     0xE0,                          /* bInterfaceClass: Wireless Controller */
@@ -152,8 +154,8 @@ __ALIGN_BEGIN uint8_t usbd_cdc_CfgDesc[] __ALIGN_END =
     0x05, /* bFunctionLength */
     0x24, /* bDescriptorType = CS Interface */
     0x06, /* bDescriptorSubtype = Union */
-    0x00, /* bControlInterface = "RNDIS Communications Control" */
-    0x01, /* bSubordinateInterface0 = "RNDIS Ethernet Data" */
+    RNDIS_CONTROL_IFACE, /* bControlInterface = "RNDIS Communications Control" */
+    RNDIS_DATA_IFACE, /* bSubordinateInterface0 = "RNDIS Ethernet Data" */
 
     /* Endpoint descriptors for Communication Class Interface */
 
@@ -168,7 +170,7 @@ __ALIGN_BEGIN uint8_t usbd_cdc_CfgDesc[] __ALIGN_END =
 
     9,                             /* bLength */
     USB_INTERFACE_DESCRIPTOR_TYPE, /* bDescriptorType */
-    0x01,                          /* bInterfaceNumber */
+    RNDIS_DATA_IFACE,              /* bInterfaceNumber */
     0x00,                          /* bAlternateSetting */
     2,                             /* bNumEndpoints */
     0x0A,                          /* bInterfaceClass: CDC */
@@ -190,11 +192,50 @@ __ALIGN_BEGIN uint8_t usbd_cdc_CfgDesc[] __ALIGN_END =
     RNDIS_DATA_OUT_EP,            /* bEndpointAddr   = OUT EP */
     0x02,                         /* bmAttributes    = BULK */
     RNDIS_DATA_OUT_SZ, 0,         /* wMaxPacketSize */
-    0                             /* bInterval       = ignored for BULK */
+    0,                             /* bInterval       = ignored for BULK */
+
+
+    // spare descriptor
+
+    9,                             /* bLength */
+    USB_INTERFACE_DESCRIPTOR_TYPE, /* bDescriptorType = INTERFACE */
+          0x2,           /* bInterfaceNumber */
+    0x00,                          /* bAlternateSetting */
+    3,                             /* bNumEndpoints */
+    0xF0,                          /* bInterfaceClass: Wireless Controller */
+    0x01,                          /* bInterfaceSubClass */
+    0x03,                          /* bInterfaceProtocol */
+    0,                             /* iInterface */
+
+    7,                            /* bLength         = 7 bytes */
+    USB_ENDPOINT_DESCRIPTOR_TYPE, /* bDescriptorType = ENDPOINT [IN] */
+          0x81,             /* bEndpointAddr   = IN EP */
+    0x02,                         /* bmAttributes    = BULK */
+    RNDIS_DATA_IN_SZ, 0,          /* wMaxPacketSize */
+    0,                            /* bInterval       = ignored for BULK */
+
+    7,                            /* bLength         = 7 bytes */
+    USB_ENDPOINT_DESCRIPTOR_TYPE, /* bDescriptorType = ENDPOINT [IN] */
+          0x82,             /* bEndpointAddr   = IN EP */
+    0x02,                         /* bmAttributes    = BULK */
+    RNDIS_DATA_IN_SZ, 0,          /* wMaxPacketSize */
+    0,                            /* bInterval       = ignored for BULK */
+
+    7,                            /* bLength         = 7 bytes */
+    USB_ENDPOINT_DESCRIPTOR_TYPE, /* bDescriptorType = ENDPOINT [IN] */
+          0x83,             /* bEndpointAddr   = IN EP */
+    0x02,                         /* bmAttributes    = BULK */
+    RNDIS_DATA_IN_SZ, 0,          /* wMaxPacketSize */
+    0,                            /* bInterval       = ignored for BULK */
+
+
 };
 
 static uint8_t usbd_rndis_init(USBD_HandleTypeDef *pdev,  uint8_t cfgidx)
 {
+  USBD_LL_OpenEP(pdev, 0x81, USBD_EP_TYPE_BULK, RNDIS_DATA_IN_SZ);
+  USBD_LL_OpenEP(pdev, 0x82, USBD_EP_TYPE_BULK, RNDIS_DATA_IN_SZ);
+  USBD_LL_OpenEP(pdev, 0x83, USBD_EP_TYPE_BULK, RNDIS_DATA_IN_SZ);
   USBD_LL_OpenEP(pdev, RNDIS_NOTIFICATION_IN_EP, USBD_EP_TYPE_INTR, RNDIS_NOTIFICATION_IN_SZ);
   USBD_LL_OpenEP(pdev, RNDIS_DATA_IN_EP, USBD_EP_TYPE_BULK, RNDIS_DATA_IN_SZ);
   USBD_LL_OpenEP(pdev, RNDIS_DATA_OUT_EP, USBD_EP_TYPE_BULK, RNDIS_DATA_OUT_SZ);
@@ -256,7 +297,7 @@ static uint8_t usbd_rndis_setup(USBD_HandleTypeDef *pdev, USBD_SetupReqTypedef *
         }
         else /* Host-to-Device requeset */
         {
-          USBD_CtlPrepareRx(pdev, encapsulated_buffer, req->wLength);          
+            USBD_CtlPrepareRx(pdev, encapsulated_buffer, req->wLength);          
         }
       }
       return USBD_OK;
@@ -557,7 +598,7 @@ static uint8_t usbd_cdc_transfer(void *pdev)
 static uint8_t usbd_rndis_data_in(USBD_HandleTypeDef *pdev, uint8_t epnum)
 {
     epnum &= 0x0F;
-    if (epnum == (RNDIS_DATA_IN_EP & 0x0F))  // TODO(oliver)
+    if (epnum == (RNDIS_DATA_IN_EP & 0x0F))
     {
         rndis_first_tx = false;
         rndis_sended += sended;
