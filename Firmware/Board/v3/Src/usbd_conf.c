@@ -345,9 +345,9 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   }
 
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
-  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x40); // CDC IN endpoint
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 2, 0x40); // ODrive IN endpoint
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 3, 0x40); // RNDIS IN endpoint
   }
   return USBD_OK;
 }
