@@ -332,7 +332,7 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
   pdev->pData = &hpcd_USB_OTG_FS;
   
   hpcd_USB_OTG_FS.Instance = USB_OTG_FS;
-  hpcd_USB_OTG_FS.Init.dev_endpoints = 4;  // Limited to 4 by hardware
+  hpcd_USB_OTG_FS.Init.dev_endpoints = 8;
   hpcd_USB_OTG_FS.Init.speed = PCD_SPEED_FULL;
   hpcd_USB_OTG_FS.Init.dma_enable = DISABLE;
   hpcd_USB_OTG_FS.Init.ep0_mps = DEP0CTL_MPS_64;
@@ -349,20 +349,9 @@ USBD_StatusTypeDef USBD_LL_Init(USBD_HandleTypeDef *pdev)
 
   HAL_PCDEx_SetRxFiFo(&hpcd_USB_OTG_FS, 0x80);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0, 0x40);  // FOR EP0 control traffic
-  //HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0xF & CDC_IN_EP, 0x40);
-  //HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0xF & CDC_CMD_EP, 0x40);
-  //HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0xF & ODRIVE_IN_EP, 0x40);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 1, 0x40);
   HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 2, 0x40);
-HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 3, 0x40);
-HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 4, 0x40);
-HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 5, 0x40);
-HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 6, 0x40);
-HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 7, 0x40);
-
-  //HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0xF & RNDIS_NOTIFICATION_IN_EP, 0x40);
-  //HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 0xF & RNDIS_DATA_IN_EP, 0x40);
-  
+  HAL_PCDEx_SetTxFiFo(&hpcd_USB_OTG_FS, 3, 0x40);
   }
   return USBD_OK;
 }
@@ -696,7 +685,7 @@ USBD_StatusTypeDef USBD_LL_Transmit(USBD_HandleTypeDef *pdev, uint8_t ep_addr, u
   HAL_StatusTypeDef hal_status = HAL_OK;
   USBD_StatusTypeDef usb_status = USBD_OK;
 
-  hal_status = HAL_PCD_EP_Transmit(pdev->pData, ep_addr, pbuf, size);
+  hal_status = HAL_PCD_EP_Transmit(pdev->pData, 0xF & ep_addr, pbuf, size);
      
   switch (hal_status) {
     case HAL_OK :

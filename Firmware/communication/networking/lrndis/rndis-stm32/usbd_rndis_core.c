@@ -96,7 +96,7 @@ __ALIGN_BEGIN uint8_t usbd_cdc_CfgDesc[] __ALIGN_END =
     9,                                 /* bLength         = 9 bytes. */
     USB_CONFIGURATION_DESCRIPTOR_TYPE, /* bDescriptorType = CONFIGURATION */
     0xDE, 0xAD,                        /* wTotalLength    = sizeof(usbd_cdc_CfgDesc) */
-    0x03,                              /* bNumInterfaces  = 2 (RNDIS spec). */
+    0x02,                              /* bNumInterfaces  = 2 (RNDIS spec). */
     0x01,                              /* bConfValue      = 1 */
     0x00,                              /* iConfiguration  = unused. */
     0xC0,                              /* bmAttributes    = Self-Powered & bus powered. */
@@ -194,51 +194,13 @@ __ALIGN_BEGIN uint8_t usbd_cdc_CfgDesc[] __ALIGN_END =
     RNDIS_DATA_OUT_SZ, 0,         /* wMaxPacketSize */
     0,                             /* bInterval       = ignored for BULK */
 
-
-    // spare descriptor
-
-    9,                             /* bLength */
-    USB_INTERFACE_DESCRIPTOR_TYPE, /* bDescriptorType = INTERFACE */
-          0x2,           /* bInterfaceNumber */
-    0x00,                          /* bAlternateSetting */
-    3,                             /* bNumEndpoints */
-    0xF0,                          /* bInterfaceClass: Wireless Controller */
-    0x01,                          /* bInterfaceSubClass */
-    0x03,                          /* bInterfaceProtocol */
-    0,                             /* iInterface */
-
-    7,                            /* bLength         = 7 bytes */
-    USB_ENDPOINT_DESCRIPTOR_TYPE, /* bDescriptorType = ENDPOINT [IN] */
-          0x81,             /* bEndpointAddr   = IN EP */
-    0x02,                         /* bmAttributes    = BULK */
-    RNDIS_DATA_IN_SZ, 0,          /* wMaxPacketSize */
-    0,                            /* bInterval       = ignored for BULK */
-
-    7,                            /* bLength         = 7 bytes */
-    USB_ENDPOINT_DESCRIPTOR_TYPE, /* bDescriptorType = ENDPOINT [IN] */
-          0x82,             /* bEndpointAddr   = IN EP */
-    0x02,                         /* bmAttributes    = BULK */
-    RNDIS_DATA_IN_SZ, 0,          /* wMaxPacketSize */
-    0,                            /* bInterval       = ignored for BULK */
-
-    7,                            /* bLength         = 7 bytes */
-    USB_ENDPOINT_DESCRIPTOR_TYPE, /* bDescriptorType = ENDPOINT [IN] */
-          0x83,             /* bEndpointAddr   = IN EP */
-    0x02,                         /* bmAttributes    = BULK */
-    RNDIS_DATA_IN_SZ, 0,          /* wMaxPacketSize */
-    0,                            /* bInterval       = ignored for BULK */
-
-
 };
 
 static uint8_t usbd_rndis_init(USBD_HandleTypeDef *pdev,  uint8_t cfgidx)
 {
-  USBD_LL_OpenEP(pdev, 0x81, USBD_EP_TYPE_BULK, RNDIS_DATA_IN_SZ);
-  USBD_LL_OpenEP(pdev, 0x82, USBD_EP_TYPE_BULK, RNDIS_DATA_IN_SZ);
-  USBD_LL_OpenEP(pdev, 0x83, USBD_EP_TYPE_BULK, RNDIS_DATA_IN_SZ);
-  USBD_LL_OpenEP(pdev, RNDIS_NOTIFICATION_IN_EP, USBD_EP_TYPE_INTR, RNDIS_NOTIFICATION_IN_SZ);
   USBD_LL_OpenEP(pdev, RNDIS_DATA_IN_EP, USBD_EP_TYPE_BULK, RNDIS_DATA_IN_SZ);
   USBD_LL_OpenEP(pdev, RNDIS_DATA_OUT_EP, USBD_EP_TYPE_BULK, RNDIS_DATA_OUT_SZ);
+  USBD_LL_OpenEP(pdev, RNDIS_NOTIFICATION_IN_EP, USBD_EP_TYPE_INTR, RNDIS_NOTIFICATION_IN_SZ);
   USBD_LL_PrepareReceive(pdev, RNDIS_DATA_OUT_EP, (uint8_t*)usb_rx_buffer, RNDIS_DATA_OUT_SZ);
   rndis_pdev = pdev;
   return USBD_OK;

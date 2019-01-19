@@ -225,10 +225,10 @@ static uint8_t  USBD_CDC_Init (USBD_HandleTypeDef *pdev,
   }
 
   /* Open ODrive IN endpoint */
-  USBD_LL_OpenEP(pdev,
-                 ODRIVE_IN_EP,
-                 USBD_EP_TYPE_BULK,
-                 pdev->dev_speed == USBD_SPEED_HIGH ? CDC_DATA_HS_IN_PACKET_SIZE : CDC_DATA_FS_IN_PACKET_SIZE);
+//  USBD_LL_OpenEP(pdev,
+//                 ODRIVE_IN_EP,
+//                 USBD_EP_TYPE_BULK,
+//                 pdev->dev_speed == USBD_SPEED_HIGH ? CDC_DATA_HS_IN_PACKET_SIZE : CDC_DATA_FS_IN_PACKET_SIZE);
   
   /* Open ODrive OUT endpoint */
   USBD_LL_OpenEP(pdev,
@@ -413,9 +413,9 @@ static uint8_t  USBD_CDC_DataIn (USBD_HandleTypeDef *pdev, uint8_t epnum)
   
   if(pdev->pClassData != NULL)
   {
-    if (epnum == 0xF & CDC_IN_EP)
+    if (epnum == (0xF & CDC_IN_EP))
       hcdc->CDC_Tx.State = 0;
-    if (epnum == 0xF & ODRIVE_IN_EP)
+    if (epnum == (0xF & ODRIVE_IN_EP))
       hcdc->ODRIVE_Tx.State = 0;
     //Note: We could use independent semaphores for simoultainous USB transmission.
     osSemaphoreRelease(sem_usb_tx);

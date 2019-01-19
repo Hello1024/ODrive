@@ -198,12 +198,16 @@ void communication_task(void * ctx) {
     auto tree_ptr = new (tree_buffer) tree_type(make_obj_tree());
     fibre_publish(*tree_ptr);
 
+    start_networking();
+    for (;;) {osDelay(1000);};
+
     // Allow main init to continue
     endpoint_list_valid = true;
     
+    
     start_uart_server();
     start_usb_server();
-    start_networking();
+    
     if (board_config.enable_i2c_instead_of_can) {
         start_i2c_server();
     } else {

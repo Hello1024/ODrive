@@ -51,9 +51,12 @@
   */ 
 #define CDC_IN_EP                                   0x81  /* EP1 for data IN */
 #define CDC_OUT_EP                                  0x01  /* EP1 for data OUT */
-#define CDC_CMD_EP                                  0x82  /* EP2 for CDC commands */
-#define ODRIVE_IN_EP                                0x83  /* EP3 IN: ODrive device TX endpoint */
+#define ODRIVE_IN_EP                                0x82  /* EP3 IN: ODrive device TX endpoint */
 #define ODRIVE_OUT_EP                               0x02  /* EP3 OUT: ODrive device RX endpoint */
+
+/* NON-FUNCTIONAL.  The hardware we use doesn't support endpoints over 0x83
+   CDC commands */
+#define CDC_CMD_EP                                  0x87 
 
 #define CDC_COMM_IFACE                              0x0  
 #define CDC_DATA_IFACE                              (CDC_COMM_IFACE+1)  

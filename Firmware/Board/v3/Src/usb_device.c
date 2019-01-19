@@ -334,8 +334,8 @@ __ALIGN_BEGIN uint8_t USBD_COMPOSITE_CfgDesc[USB_COMPOSITE_CONFIG_DESC_SIZ] __AL
 
 static uint8_t  USBD_COMPOSITE_Init (USBD_HandleTypeDef *pdev, 
                                uint8_t cfgidx) {
-  return USBD_CDC.Init(pdev, cfgidx)
-      || usbd_rndis_cb.Init(pdev, cfgidx);
+  USBD_CDC.Init(pdev, cfgidx);
+  return usbd_rndis_cb.Init(pdev, cfgidx);
 }
 
 static uint8_t  USBD_COMPOSITE_DeInit (USBD_HandleTypeDef *pdev, 
@@ -359,17 +359,19 @@ static inline uint8_t ep_is_for_cdc(uint8_t epnum) {
 static uint8_t  USBD_COMPOSITE_Setup (USBD_HandleTypeDef *pdev, 
                                 USBD_SetupReqTypedef *req) {
   // Se need to see who this setup is for...
+  //return USBD_OK;
+
   switch (req->bmRequest & USB_REQ_RECIPIENT_MASK) {
     case USB_REQ_RECIPIENT_DEVICE:
       // hopefully lower layers deal with this for us.
       return USBD_OK;
     case USB_REQ_RECIPIENT_INTERFACE:
       switch (req->wIndex) {
-//        case CDC_COMM_IFACE:
-//        case CDC_DATA_IFACE:
-//        case CDC_ODRIVE_IFACE:
-//          usbd_composite_next_ep0_recv_for_cdc = 1;
-//          return USBD_CDC.Setup(pdev, req);
+        case CDC_COMM_IFACE:
+        case CDC_DATA_IFACE:
+        case CDC_ODRIVE_IFACE:
+          usbd_composite_next_ep0_recv_for_cdc = 1;
+          return USBD_CDC.Setup(pdev, req);
         case RNDIS_CONTROL_IFACE:
         case RNDIS_DATA_IFACE:
           usbd_composite_next_ep0_recv_for_cdc = 0;
@@ -430,6 +432,9 @@ static uint8_t  USBD_COMPOSITE_IsoOUTIncomplete (USBD_HandleTypeDef *pdev,
 
 
 static uint8_t  *USBD_COMPOSITE_GetCfgDescriptor (uint16_t *length) {
+  USBD_COMPOSITE_CfgDesc[2] = sizeof(USBD_COMPOSITE_CfgDesc) & 0xFF;
+  USBD_COMPOSITE_CfgDesc[3] = (sizeof(USBD_COMPOSITE_CfgDesc) >> 8) & 0xFF;
+    
   *length = sizeof (USBD_COMPOSITE_CfgDesc);
   return USBD_COMPOSITE_CfgDesc;
 }
@@ -485,7 +490,7 @@ void MX_USB_DEVICE_Init(void)
   /* Init Device Library, add supported class and start the library. */
   USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS);
 
-  USBD_RegisterClass(&hUsbDeviceFS, &usbd_rndis_cb);
+  USBD_RegisterClass(&hUsbDeviceFS, &USBD_COMPOSITE);
 
   USBD_CDC_RegisterInterface(&hUsbDeviceFS, &USBD_Interface_fops_FS);
 
