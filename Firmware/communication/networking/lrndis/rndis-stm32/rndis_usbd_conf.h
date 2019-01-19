@@ -33,17 +33,17 @@
 // These need to not overlap with interface and EP numbers 
 // used by CDC and ODrive interfaces
 #define RNDIS_DATA_IN_EP         0x83
-#define RNDIS_DATA_OUT_EP        0x03
+#define RNDIS_DATA_OUT_EP        0x01
 
 // Nonfunctional.  Th STM32F405 in FS mode only allows a
 // maximum of 0x83.  It is used as normal, but never works.
-#define RNDIS_NOTIFICATION_IN_EP 0x87
+#define RNDIS_NOTIFICATION_IN_EP 0x82
 
 #define RNDIS_NOTIFICATION_IN_SZ 0x08
 #define RNDIS_DATA_IN_SZ         0x40
 #define RNDIS_DATA_OUT_SZ        0x40
 
-#define RNDIS_CONTROL_IFACE      0x3
+#define RNDIS_CONTROL_IFACE      0x0
 #define RNDIS_DATA_IFACE         (RNDIS_CONTROL_IFACE+1)
 
 

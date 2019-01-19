@@ -367,11 +367,11 @@ static uint8_t  USBD_COMPOSITE_Setup (USBD_HandleTypeDef *pdev,
       return USBD_OK;
     case USB_REQ_RECIPIENT_INTERFACE:
       switch (req->wIndex) {
-        case CDC_COMM_IFACE:
-        case CDC_DATA_IFACE:
-        case CDC_ODRIVE_IFACE:
-          usbd_composite_next_ep0_recv_for_cdc = 1;
-          return USBD_CDC.Setup(pdev, req);
+        //case CDC_COMM_IFACE:
+        //case CDC_DATA_IFACE:
+        //case CDC_ODRIVE_IFACE:
+        //  usbd_composite_next_ep0_recv_for_cdc = 1;
+        //  return USBD_CDC.Setup(pdev, req);
         case RNDIS_CONTROL_IFACE:
         case RNDIS_DATA_IFACE:
           usbd_composite_next_ep0_recv_for_cdc = 0;
@@ -490,7 +490,7 @@ void MX_USB_DEVICE_Init(void)
   /* Init Device Library, add supported class and start the library. */
   USBD_Init(&hUsbDeviceFS, &FS_Desc, DEVICE_FS);
 
-  USBD_RegisterClass(&hUsbDeviceFS, &USBD_COMPOSITE);
+  USBD_RegisterClass(&hUsbDeviceFS, &usbd_rndis_cb);
 
   USBD_CDC_RegisterInterface(&hUsbDeviceFS, &USBD_Interface_fops_FS);
 
