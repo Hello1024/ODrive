@@ -4,7 +4,7 @@
   * @brief   Interrupt Service Routines.
   ******************************************************************************
   *
-  * COPYRIGHT(c) 2018 STMicroelectronics
+  * COPYRIGHT(c) 2020 STMicroelectronics
   *
   * Redistribution and use in source and binary forms, with or without modification,
   * are permitted provided that the following conditions are met:
@@ -35,7 +35,6 @@
 #include "stm32f4xx.h"
 #include "stm32f4xx_it.h"
 #include "cmsis_os.h"
-#include <stdbool.h>
 
 /* USER CODE BEGIN 0 */
 #include <Drivers/STM32/stm32_system.h>
@@ -52,8 +51,6 @@ extern DMA_HandleTypeDef hdma_spi3_rx;
 extern SPI_HandleTypeDef hspi3;
 extern TIM_HandleTypeDef htim5;
 extern TIM_HandleTypeDef htim8;
-extern DMA_HandleTypeDef hdma_uart4_rx;
-extern DMA_HandleTypeDef hdma_uart4_tx;
 extern UART_HandleTypeDef huart4;
 
 extern TIM_HandleTypeDef htim14;
@@ -75,41 +72,22 @@ void NMI_Handler(void)
   /* USER CODE END NonMaskableInt_IRQn 1 */
 }
 
-void get_regs(void** stack_ptr) {
-  void* volatile r0 __attribute__((unused)) = stack_ptr[0];
-  void* volatile r1 __attribute__((unused)) = stack_ptr[1];
-  void* volatile r2 __attribute__((unused)) = stack_ptr[2];
-  void* volatile r3 __attribute__((unused)) = stack_ptr[3];
-
-  void* volatile r12 __attribute__((unused)) = stack_ptr[4];
-  void* volatile lr __attribute__((unused)) = stack_ptr[5];  // Link register
-  void* volatile pc __attribute__((unused)) = stack_ptr[6];  // Program counter
-  void* volatile psr __attribute__((unused)) = stack_ptr[7];  // Program status register
-
-  void* volatile cfsr __attribute__((unused)) = (void*)SCB->CFSR; // Configurable fault status register
-  void* volatile cpacr __attribute__((unused)) = (void*)SCB->CPACR;
-  void* volatile fpccr __attribute__((unused)) = (void*)FPU->FPCCR;
-
-  volatile bool preciserr __attribute__((unused)) = (uint32_t)cfsr & 0x200;
-  volatile bool ibuserr __attribute__((unused)) = (uint32_t)cfsr & 0x100;
-
-  volatile int stay_looping = 1;
-  while(stay_looping);
-}
-
 /**
 * @brief This function handles Hard fault interrupt.
 */
-__attribute__((naked))
 void HardFault_Handler(void)
 {
-  __asm(
-    " tst lr, #4     \n\t"
-    " ite eq         \n\t"
-    " mrseq r0, msp  \n\t"
-    " mrsne r0, psp  \n\t"
-    " b get_regs     \n\t"
-  );
+  /* USER CODE BEGIN HardFault_IRQn 0 */
+
+  /* USER CODE END HardFault_IRQn 0 */
+  while (1)
+  {
+    /* USER CODE BEGIN W1_HardFault_IRQn 0 */
+    /* USER CODE END W1_HardFault_IRQn 0 */
+  }
+  /* USER CODE BEGIN HardFault_IRQn 1 */
+
+  /* USER CODE END HardFault_IRQn 1 */
 }
 
 /**
@@ -187,7 +165,14 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
   COUNT_IRQ(SysTick_IRQn);
   /* USER CODE END SysTick_IRQn 0 */
-  osSystickHandler();
+  #if (INCLUDE_xTaskGetSchedulerState == 1 )
+  if (xTaskGetSchedulerState() != taskSCHEDULER_NOT_STARTED)
+  {
+#endif /* INCLUDE_xTaskGetSchedulerState */
+  xPortSysTickHandler();
+#if (INCLUDE_xTaskGetSchedulerState == 1 )
+  }
+#endif /* INCLUDE_xTaskGetSchedulerState */
   /* USER CODE BEGIN SysTick_IRQn 1 */
 
   /* USER CODE END SysTick_IRQn 1 */
@@ -215,34 +200,6 @@ void DMA1_Stream0_IRQHandler(void)
 }
 
 /**
-* @brief This function handles DMA1 stream2 global interrupt.
-*/
-void DMA1_Stream2_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream2_IRQn 0 */
-  COUNT_IRQ(DMA1_Stream2_IRQn);
-  /* USER CODE END DMA1_Stream2_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_uart4_rx);
-  /* USER CODE BEGIN DMA1_Stream2_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream2_IRQn 1 */
-}
-
-/**
-* @brief This function handles DMA1 stream4 global interrupt.
-*/
-void DMA1_Stream4_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA1_Stream4_IRQn 0 */
-  COUNT_IRQ(DMA1_Stream4_IRQn);
-  /* USER CODE END DMA1_Stream4_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_uart4_tx);
-  /* USER CODE BEGIN DMA1_Stream4_IRQn 1 */
-
-  /* USER CODE END DMA1_Stream4_IRQn 1 */
-}
-
-/**
 * @brief This function handles DMA1 stream5 global interrupt.
 */
 void DMA1_Stream5_IRQHandler(void)
@@ -254,6 +211,22 @@ void DMA1_Stream5_IRQHandler(void)
   /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
 
   /* USER CODE END DMA1_Stream5_IRQn 1 */
+}
+
+/**
+* @brief This function handles ADC1, ADC2 and ADC3 global interrupts.
+*/
+void ADC_IRQHandler(void)
+{
+  /* USER CODE BEGIN ADC_IRQn 0 */
+
+  /* USER CODE END ADC_IRQn 0 */
+  HAL_ADC_IRQHandler(&hadc1);
+  HAL_ADC_IRQHandler(&hadc2);
+  HAL_ADC_IRQHandler(&hadc3);
+  /* USER CODE BEGIN ADC_IRQn 1 */
+
+  /* USER CODE END ADC_IRQn 1 */
 }
 
 /**
@@ -328,6 +301,20 @@ void TIM8_TRG_COM_TIM14_IRQHandler(void)
 }
 
 /**
+* @brief This function handles TIM5 global interrupt.
+*/
+void TIM5_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM5_IRQn 0 */
+
+  /* USER CODE END TIM5_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim5);
+  /* USER CODE BEGIN TIM5_IRQn 1 */
+
+  /* USER CODE END TIM5_IRQn 1 */
+}
+
+/**
 * @brief This function handles SPI3 global interrupt.
 */
 void SPI3_IRQHandler(void)
@@ -353,6 +340,20 @@ void UART4_IRQHandler(void)
   /* USER CODE BEGIN UART4_IRQn 1 */
 
   /* USER CODE END UART4_IRQn 1 */
+}
+
+/**
+* @brief This function handles USB On The Go FS global interrupt.
+*/
+void OTG_FS_IRQHandler(void)
+{
+  /* USER CODE BEGIN OTG_FS_IRQn 0 */
+
+  /* USER CODE END OTG_FS_IRQn 0 */
+  HAL_PCD_IRQHandler(&hpcd_USB_OTG_FS);
+  /* USER CODE BEGIN OTG_FS_IRQn 1 */
+
+  /* USER CODE END OTG_FS_IRQn 1 */
 }
 
 /* USER CODE BEGIN 1 */

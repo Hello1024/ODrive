@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2020 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -150,10 +150,10 @@
 #define M0_ENC_A_GPIO_Port GPIOB
 #define M0_ENC_B_Pin GPIO_PIN_5
 #define M0_ENC_B_GPIO_Port GPIOB
-#define M1_ENC_A_Pin GPIO_PIN_6
-#define M1_ENC_A_GPIO_Port GPIOB
-#define M1_ENC_B_Pin GPIO_PIN_7
-#define M1_ENC_B_GPIO_Port GPIOB
+#define M1_SCL_Pin GPIO_PIN_6
+#define M1_SCL_GPIO_Port GPIOB
+#define M1_SDA_Pin GPIO_PIN_7
+#define M1_SDA_GPIO_Port GPIOB
 
 /* ########################## Assert Selection ############################## */
 /**

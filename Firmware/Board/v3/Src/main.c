@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2020 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -84,13 +84,11 @@ void MX_FREERTOS_Init(void);
 
 /**
   * @brief  The application entry point.
-  *         => Nope. We provide our own.
   *
   * @retval None
   */
-//int main(void)
-//{
-#if 0
+int main(void)
+{
   /* USER CODE BEGIN 1 */
 
   /* USER CODE END 1 */
@@ -116,11 +114,10 @@ void MX_FREERTOS_Init(void);
   MX_DMA_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
-  // MX_CAN1_Init(); // CAN or I2C called in main.cpp instead
+  MX_CAN1_Init();
   MX_TIM1_Init();
   MX_TIM8_Init();
   MX_TIM3_Init();
-  MX_TIM4_Init();
   MX_SPI3_Init();
   MX_ADC3_Init();
   MX_TIM2_Init();
@@ -151,7 +148,6 @@ void MX_FREERTOS_Init(void);
   /* USER CODE END 3 */
 
 }
-#endif
 
 /**
   * @brief System Clock Configuration
